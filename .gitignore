@@ -17,3 +17,9 @@
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+
+# GoLand
+.idea
+
+# Sensitive parameters
+.env
