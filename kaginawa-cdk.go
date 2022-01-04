@@ -47,6 +47,7 @@ func NewKaginawaCdkStack(scope constructs.Construct, id string, props *KaginawaC
 
 	// EC2 Instance
 	awsec2.NewInstance(stack, jsii.String("KaginawaSSHInstance"), &awsec2.InstanceProps{
+		InstanceName: jsii.String("kssh1"),
 		// t4g.micro
 		InstanceType: awsec2.InstanceType_Of(awsec2.InstanceClass_BURSTABLE4_GRAVITON, awsec2.InstanceSize_MICRO),
 		// Debian 10, SSD Volume Type, arm64
@@ -160,6 +161,7 @@ func NewKaginawaCdkStack(scope constructs.Construct, id string, props *KaginawaC
 				"DYNAMO_LOGS":         logsTable.TableName(),
 				"DYNAMO_SESSIONS":     sessionsTable.TableName(),
 				"DYNAMO_CUSTOM_IDS":   customIDIndex.IndexName,
+				"OAUTH_TYPE":          jsii.String(os.Getenv("OAUTH_TYPE")),
 				"OAUTH_DOMAIN":        jsii.String(os.Getenv("OAUTH_DOMAIN")),
 				"OAUTH_CLIENT_ID":     jsii.String(os.Getenv("OAUTH_CLIENT_ID")),
 				"OAUTH_CLIENT_SECRET": jsii.String(os.Getenv("OAUTH_CLIENT_SECRET")),
