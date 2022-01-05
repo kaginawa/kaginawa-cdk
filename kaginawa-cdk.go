@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awscertificatemanager"
@@ -45,23 +46,33 @@ func NewKaginawaCdkStack(scope constructs.Construct, id string, props *KaginawaC
 		}},
 	})
 
-	// EC2 Instance
-	awsec2.NewInstance(stack, jsii.String("KaginawaSSHInstance"), &awsec2.InstanceProps{
-		InstanceName: jsii.String("kssh1"),
-		// t4g.micro
-		InstanceType: awsec2.InstanceType_Of(awsec2.InstanceClass_BURSTABLE4_GRAVITON, awsec2.InstanceSize_MICRO),
-		// Debian 10, SSD Volume Type, arm64
-		MachineImage: awsec2.MachineImage_GenericLinux(&map[string]*string{
-			"ap-northeast-1": jsii.String("ami-0ed400c2ea06a311c"),
-		}, nil),
-		Role: awsiam.NewRole(stack, jsii.String("KaginawaSSHInstanceSSM"), &awsiam.RoleProps{
-			AssumedBy: awsiam.NewServicePrincipal(jsii.String("ec2.amazonaws.com"), nil),
-			ManagedPolicies: &[]awsiam.IManagedPolicy{
-				awsiam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("AmazonSSMManagedInstanceCore")),
-			},
-		}),
-		Vpc: vpc,
-	})
+	// EC2 Instances
+	nServers := 1
+	if n, err := strconv.Atoi(os.Getenv("NUM_OF_SSH_SERVERS")); err == nil && n > 0 {
+		nServers = n
+	}
+	for idx := 1; idx <= nServers; idx++ {
+		i := strconv.Itoa(idx)
+		awsec2.NewCfnEIPAssociation(stack, jsii.String("KaginawaEIPAssoc"+i), &awsec2.CfnEIPAssociationProps{
+			Eip: awsec2.NewCfnEIP(stack, jsii.String("KaginawaEIP"+i), nil).Ref(),
+			InstanceId: awsec2.NewInstance(stack, jsii.String("KaginawaSSHInstance"+i), &awsec2.InstanceProps{
+				InstanceName: jsii.String("kssh" + i),
+				// t4g.micro
+				InstanceType: awsec2.InstanceType_Of(awsec2.InstanceClass_BURSTABLE4_GRAVITON, awsec2.InstanceSize_MICRO),
+				// Debian 10, SSD Volume Type, arm64
+				MachineImage: awsec2.MachineImage_GenericLinux(&map[string]*string{
+					"ap-northeast-1": jsii.String("ami-0ed400c2ea06a311c"),
+				}, nil),
+				Role: awsiam.NewRole(stack, jsii.String("KaginawaSSHInstanceSSM"), &awsiam.RoleProps{
+					AssumedBy: awsiam.NewServicePrincipal(jsii.String("ec2.amazonaws.com"), nil),
+					ManagedPolicies: &[]awsiam.IManagedPolicy{
+						awsiam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("AmazonSSMManagedInstanceCore")),
+					},
+				}),
+				Vpc: vpc,
+			}).InstanceId(),
+		})
+	}
 
 	// DynamoDB auto-scaling properties
 	tableScaling := awsdynamodb.EnableScalingProps{MinCapacity: jsii.Number(1), MaxCapacity: jsii.Number(100)}
