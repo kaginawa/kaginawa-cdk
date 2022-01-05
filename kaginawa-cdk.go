@@ -46,9 +46,25 @@ func NewKaginawaCdkStack(scope constructs.Construct, id string, props *KaginawaC
 		}},
 	})
 
-	// EC2 Instances
+	// EC2 Role
+	role := awsiam.NewRole(stack, jsii.String("KaginawaSSHInstanceSSM"), &awsiam.RoleProps{
+		AssumedBy: awsiam.NewServicePrincipal(jsii.String("ec2.amazonaws.com"), nil),
+		ManagedPolicies: &[]awsiam.IManagedPolicy{
+			awsiam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("AmazonSSMManagedInstanceCore")),
+		},
+	})
+
+	// EC2 Security Group
+	sg := awsec2.NewSecurityGroup(stack, jsii.String("KaginawaSSHSecurityGroup"), &awsec2.SecurityGroupProps{
+		SecurityGroupName: jsii.String("KaginawaSSHSecurityGroup"),
+		AllowAllOutbound:  jsii.Bool(true),
+		Vpc:               vpc,
+	})
+	sg.AddIngressRule(awsec2.Peer_AnyIpv4(), awsec2.Port_Tcp(jsii.Number(22)), jsii.String("Allow SSH access"), nil)
+
+	// EC2 instances
 	nServers := 1
-	if n, err := strconv.Atoi(os.Getenv("NUM_OF_SSH_SERVERS")); err == nil && n > 0 {
+	if n, err := strconv.Atoi(os.Getenv("NUM_OF_SSH_SERVERS")); err == nil && n >= 0 {
 		nServers = n
 	}
 	for idx := 1; idx <= nServers; idx++ {
@@ -63,13 +79,10 @@ func NewKaginawaCdkStack(scope constructs.Construct, id string, props *KaginawaC
 				MachineImage: awsec2.MachineImage_GenericLinux(&map[string]*string{
 					"ap-northeast-1": jsii.String("ami-0ed400c2ea06a311c"),
 				}, nil),
-				Role: awsiam.NewRole(stack, jsii.String("KaginawaSSHInstanceSSM"), &awsiam.RoleProps{
-					AssumedBy: awsiam.NewServicePrincipal(jsii.String("ec2.amazonaws.com"), nil),
-					ManagedPolicies: &[]awsiam.IManagedPolicy{
-						awsiam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("AmazonSSMManagedInstanceCore")),
-					},
-				}),
-				Vpc: vpc,
+				KeyName: jsii.String(os.Getenv("KEYPAIR_NAME")),
+				Role:          role,
+				SecurityGroup: sg,
+				Vpc:           vpc,
 			}).InstanceId(),
 		})
 	}

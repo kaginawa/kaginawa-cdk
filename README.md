@@ -14,15 +14,19 @@ Server.
 Create `.env` file and fill parameters as following format.
 
 ```
-OAUTH_DOMAIN=example.auth0.com
+OAUTH_TYPE=auth0  # or "google"
+OAUTH_DOMAIN=example.auth0.com  # auth0 only
 OAUTH_CLIENT_ID=xxxxx
 OAUTH_CLIENT_SECRET=xxxxx
 DOMAIN_NAME=kaginawa.example.com
+KEYPAIR_NAME=kaginawa
+NUM_OF_SSH_SERVERS=1
 ```
 
-We recommend to use [Auth0](https://auth0.com/) as OAuth2 provider.
+Manual operations:
 
-You must add a DNS record (CNAME) for the domain verification during deployment process.
+- Create EC2 key pair with [Management Console](https://console.aws.amazon.com/ec2/v2/home#KeyPairs:) before deployment. 
+- Add a DNS record (CNAME) for the domain verification during deployment process.
 
 ## CDK commands
 
