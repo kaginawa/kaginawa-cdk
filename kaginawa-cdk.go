@@ -211,6 +211,7 @@ func NewKaginawaCdkStack(scope constructs.Construct, id string, props *KaginawaC
 			keysTable.TableArn(),
 			serversTable.TableArn(),
 			nodesTable.TableArn(),
+			jsii.String(*nodesTable.TableArn() + "/index/" + *customIDIndex.IndexName),
 			logsTable.TableArn(),
 			sessionsTable.TableArn(),
 		},
