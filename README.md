@@ -35,6 +35,12 @@ Manual operations:
 * `cdk synth`       emits the synthesized CloudFormation template
 * `go test`         run unit tests
 
+## Update ECS service with the latest container image
+
+```
+aws ecs update-service --cluster KaginawaServer --service KaginawaServer --force-new-deployment
+```
+
 ## LICENSE
 
 kaginawa-cdk licenced under the [BSD 3-Clause License](LICENSE).

@@ -79,7 +79,7 @@ func NewKaginawaCdkStack(scope constructs.Construct, id string, props *KaginawaC
 				MachineImage: awsec2.MachineImage_GenericLinux(&map[string]*string{
 					"ap-northeast-1": jsii.String("ami-0ed400c2ea06a311c"),
 				}, nil),
-				KeyName: jsii.String(os.Getenv("KEYPAIR_NAME")),
+				KeyName:       jsii.String(os.Getenv("KEYPAIR_NAME")),
 				Role:          role,
 				SecurityGroup: sg,
 				Vpc:           vpc,
@@ -201,6 +201,10 @@ func NewKaginawaCdkStack(scope constructs.Construct, id string, props *KaginawaC
 		Port:                jsii.Number(443),
 		DefaultTargetGroups: &[]awselasticloadbalancingv2.IApplicationTargetGroup{service.TargetGroup()},
 		Certificates:        &[]awselasticloadbalancingv2.IListenerCertificate{cert},
+	})
+	service.LoadBalancer().AddListener(jsii.String("KaginawaServerALB80"), &awselasticloadbalancingv2.BaseApplicationListenerProps{
+		Port:                jsii.Number(80),
+		DefaultTargetGroups: &[]awselasticloadbalancingv2.IApplicationTargetGroup{service.TargetGroup()},
 	})
 	service.TaskDefinition().AddToTaskRolePolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
 		Resources: &[]*string{
